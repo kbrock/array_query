@@ -1,5 +1,8 @@
 require "array_search/version"
+require "array_search/query"
 
 module ArraySearch
-  # Your code goes here...
+  def self.wrap(collection)
+    Query.new(collection)
+  end
 end
