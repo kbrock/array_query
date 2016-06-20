@@ -8,7 +8,7 @@ describe ArraySearch::Query do
     it "accepts a collection" do
       as = described_class.new(a)
       expect(as.collection).to eq(a)
-      expect(as.conditions).to be {} # be_blank
+      expect(as.conditions).to eq({}) # be_blank
     end
 
     # private api
@@ -23,45 +23,46 @@ describe ArraySearch::Query do
   describe "#where", "#filtered" do
     let(:peter) { person(%w(peter NY))}
     let(:joe) { person(%w(joe CA))}
+    let(:joe2) { person(%w(joe NY))}
     let(:joe_and_peter) { [peter, joe] }
-    it "returns all records for nil" do
-      expect(pq(joe_and_peter).where().to_a).to eq(joe_and_peter)
+
+    it "filters to all records for nil conditions" do
+      # and is a no op
+      expect(pq(joe_and_peter).where().to_a).to equal(joe_and_peter)
     end
 
-    it "returns all records for empty conditions" do
-      expect(pq(joe_and_peter).where().to_a).to eq(joe_and_peter)
+    it "filters to all records for empty conditions" do
+      expect(pq(joe_and_peter).where({}).to_a).to equal(joe_and_peter)
     end
 
-    it "filter removes all people" do
+    it "filters to no people" do
       expect(pq(joe_and_peter).where(:state => "CAT").to_a).to eq([])
     end
 
-    it "filter includes some people" do
+    it "filters to some people" do
       expect(pq(joe_and_peter).where(:state => "CA").to_a).to eq([joe])
     end
 
-    it "filter includes people from many states" do
+    it "filters to all people for multi-condition" do
       expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).to_a).to eq(joe_and_peter)
     end
 
-    it "filter includes no people from many states" do
+    it "filters to no people from multi-condition" do
       expect(pq(joe_and_peter).where(:state => %w(CANADA NH)).to_a).to eq([])
     end
 
-    it "supports multiple conditions" do
+    it "filters with multiple fields" do
       expect(pq(joe_and_peter).where(:state => %w(CA NY AR), :name => "joe").to_a).to eq([joe])
     end
 
-    it "chains nil where" do
-      expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).where(nil).to_a).to eq(joe_and_peter)
-    end
-
-    it "chains empty where" do
-      expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).where({}).to_a).to eq(joe_and_peter)
+    it "does not create new object for nop filter" do
+      q = pq(joe_and_peter)
+      expect(q.where(nil)).to equal(q)
+      expect(q.where({})).to equal(q)
     end
 
     it "chains where" do
-      expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).where(:name => "joe").to_a).to eq([joe])
+      expect(pq([joe, joe2, peter]).where(:state => %w(NY AR)).where(:name => "joe").to_a).to eq([joe2])
     end
   end
 
