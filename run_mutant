@@ -53,9 +53,10 @@ class Mutt
     # --fail-fast
     system({ "MUTANT" => "true"},
       "mutant --include lib --require #{FILE_NAME} " +
-      "--use rspec #{class_name} -d --jobs 1 > #{mutant}")
+      "--use rspec #{class_name} -d --jobs 1 > #{mutant}-tmp")
+    FileUtils.mv("#{mutant}-tmp", mutant)
   rescue SystemExit, Interrupt
-    FileUtils.rm(mutant)
+    FileUtils.rm("#{mutant}-tmp")
     raise
   end
 
