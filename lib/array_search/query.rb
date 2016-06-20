@@ -1,33 +1,32 @@
 module ArraySearch
   class Query
-    def initialize(collection, conditions = nil)
       @collection = collection
       @conditions = conditions || {}
+    attr_accessor :collection, :conditions
+
+    def initialize(c, conds = nil)
+      @collection = c
+      @conditions = conds || {}
     end
 
-    def where(conditions = nil)
-      if conditions.nil? || conditions == {}
+    def where(conds = nil)
+      if conds.nil? || conds == {}
         self
       else
-        self.class.new(@collection, conditions.merge(conditions))
       end
     end
 
     def to_a
-      filtered(@collection, @conditions)
+      filtered(collection, conditions)
     end
 
     private
 
-    def filtered(records, conditions)
+    def filtered(records, conds)
       records.select do |record|
-        conditions.all? do |name, good_value|
+        conds.all? do |name, match|
           value = record.public_send(name)
-          if good_value.kind_of?(Array)
-            good_value.include?(value)
-          else
-            value == good_value
-          end
+          match.instance_of?(Array) ? match.include?(value) : value.eql?(match)
         end
       end
     end

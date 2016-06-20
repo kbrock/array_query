@@ -2,19 +2,25 @@ require 'spec_helper'
 
 describe ArraySearch::Query do
   describe "#initialize" do
-    it "accepts an array" do
-      a = [person(%w(joe CA))]
+    let(:a) { [person(%w(joe CA))] }
+    let(:c) { {:state => "CA"} }
+
+    it "accepts a collection" do
       as = described_class.new(a)
-      expect(as.to_a).to eq(a)
+      expect(as.collection).to eq(a)
+      expect(as.conditions).to be {} # be_blank
     end
 
     # private api
-    it "accepts a condition" do
-
+    it "accepts conditions" do
+      as = described_class.new(a, c)
+      expect(as.collection).to eq(a)
+      expect(as.conditions).to eq(c)
     end
   end
 
-  describe "#where" do
+  # filtered is the private method responsible for conditions
+  describe "#where", "#filtered" do
     let(:peter) { person(%w(peter NY))}
     let(:joe) { person(%w(joe CA))}
     let(:joe_and_peter) { [peter, joe] }
@@ -27,7 +33,7 @@ describe ArraySearch::Query do
     end
 
     it "filter removes all people" do
-      expect(pq(joe_and_peter).where(:state => "AR").to_a).to eq([])
+      expect(pq(joe_and_peter).where(:state => "CAT").to_a).to eq([])
     end
 
     it "filter includes some people" do
@@ -36,6 +42,26 @@ describe ArraySearch::Query do
 
     it "filter includes people from many states" do
       expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).to_a).to eq(joe_and_peter)
+    end
+
+    it "filter includes no people from many states" do
+      expect(pq(joe_and_peter).where(:state => %w(CANADA NH)).to_a).to eq([])
+    end
+
+    it "supports multiple conditions" do
+      expect(pq(joe_and_peter).where(:state => %w(CA NY AR), :name => "joe").to_a).to eq([joe])
+    end
+
+    it "chains nil where" do
+      expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).where(nil).to_a).to eq(joe_and_peter)
+    end
+
+    it "chains empty where" do
+      expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).where({}).to_a).to eq(joe_and_peter)
+    end
+
+    it "chains where" do
+      expect(pq(joe_and_peter).where(:state => %w(CA NY AR)).where(:name => "joe").to_a).to eq([joe])
     end
   end
 
