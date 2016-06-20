@@ -1,31 +1,40 @@
 require 'spec_helper'
 
 describe ArraySearch::Query do
+  let(:peter) { person(%w(peter NY))}
+  let(:joe) { person(%w(joe CA))}
+  let(:joe2) { person(%w(joe NY))}
+  let(:joe_and_peter) { [peter, joe] }
+
   describe "#initialize" do
-    let(:a) { [person(%w(joe CA))] }
     let(:c) { {:state => "CA"} }
 
     it "accepts a collection" do
-      as = described_class.new(a)
-      expect(as.collection).to eq(a)
+      as = described_class.new(joe)
+      expect(as.collection).to eq(joe)
       expect(as.conditions).to eq({}) # be_blank
     end
 
     # private api
     it "accepts conditions" do
-      as = described_class.new(a, c)
-      expect(as.collection).to eq(a)
+      as = described_class.new(joe, c)
+      expect(as.collection).to eq(joe)
       expect(as.conditions).to eq(c)
+    end
+  end
+
+  describe "#except" do
+    it "ignores where" do
+      expect(pq([joe]).where(:state => "NV").except(:where).to_a).to eq([joe])
+    end
+
+    it "keeps where" do
+      expect(pq([joe]).where(:state => "NV").except(:order).to_a).to eq([])
     end
   end
 
   # filtered is the private method responsible for conditions
   describe "#where", "#filtered" do
-    let(:peter) { person(%w(peter NY))}
-    let(:joe) { person(%w(joe CA))}
-    let(:joe2) { person(%w(joe NY))}
-    let(:joe_and_peter) { [peter, joe] }
-
     it "filters to all records for nil conditions" do
       # and is a no op
       expect(pq(joe_and_peter).where().to_a).to equal(joe_and_peter)

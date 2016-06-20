@@ -16,6 +16,14 @@ module ArraySearch
       end
     end
 
+    def except(*skips)
+      new_conds = conditions
+
+      new_conds = nil if skips.include?(:where)
+
+      self.class.new(collection, new_conds)
+    end
+
     def to_a
       filtered(collection, conditions)
     end
